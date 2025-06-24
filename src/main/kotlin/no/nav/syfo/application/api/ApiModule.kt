@@ -15,12 +15,14 @@ import no.nav.syfo.texas.client.TexasHttpClient
 import org.koin.ktor.ext.inject
 import registerPodApi
 import kotlin.getValue
+import no.nav.syfo.varsel.EsyfovarselProducer
 
 fun Application.configureRouting() {
     val applicationState by inject<ApplicationState>()
     val database by inject<DatabaseInterface>()
     val texasHttpClient by inject<TexasHttpClient>()
     val dineSykmeldteService by inject<DineSykmeldteService>()
+    val esyfovarselProducer by inject <EsyfovarselProducer> ()
 
     installCallId()
     installContentNegotiation()
@@ -29,6 +31,6 @@ fun Application.configureRouting() {
     routing {
         registerPodApi(applicationState, database)
         registerMetricApi()
-        registerOppfolgingsplanApi(dineSykmeldteService, texasHttpClient)
+        registerOppfolgingsplanApi(dineSykmeldteService, texasHttpClient, esyfovarselProducer)
     }
 }

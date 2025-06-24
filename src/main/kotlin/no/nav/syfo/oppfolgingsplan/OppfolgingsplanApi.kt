@@ -13,10 +13,14 @@ import no.nav.syfo.dinesykmeldte.DineSykmeldteService
 import no.nav.syfo.oppfolgingsplan.domain.Oppfolgingsplan
 import no.nav.syfo.texas.TexasAuthPlugin
 import no.nav.syfo.texas.client.TexasHttpClient
+import no.nav.syfo.varsel.EsyfovarselProducer
+import no.nav.syfo.varsel.domain.ArbeidstakerHendelse
+import no.nav.syfo.varsel.domain.HendelseType
 
 fun Routing.registerOppfolgingsplanApi(
     dineSykmeldteService: DineSykmeldteService,
     texasHttpClient: TexasHttpClient,
+    esyfovarselProducer: EsyfovarselProducer,
 ) {
 
     route("api/v1/narmesteleder/{narmesteLederId}/oppfolgingsplaner") {
@@ -25,6 +29,14 @@ fun Routing.registerOppfolgingsplanApi(
         }
 
         get {
+            val hendelse = ArbeidstakerHendelse(
+                type = HendelseType.SM_OPPFOLGINGSPLAN_OPPRETTET,
+                ferdigstill = true,
+                arbeidstakerFnr = "1234",
+                data = null,
+                orgnummer = "4321",
+            )
+            esyfovarselProducer.sendVarselToEsyfovarsel(hendelse)
             // TODO: Implement logic to retrieve oppfolgingsplan for the authenticated narmesteleder
             call.respond(HttpStatusCode.OK)
         }
