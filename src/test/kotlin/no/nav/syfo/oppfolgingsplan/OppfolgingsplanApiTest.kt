@@ -9,14 +9,19 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.verify
 import no.nav.syfo.dinesykmeldte.DineSykmeldteService
 import no.nav.syfo.texas.client.TexasHttpClient
 import no.nav.syfo.texas.client.TexasIntrospectionResponse
+import no.nav.syfo.varsel.EsyfovarselProducer
+import no.nav.syfo.varsel.domain.EsyfovarselHendelse
+import org.apache.kafka.clients.producer.KafkaProducer
 
 class OppfolgingsplanApiTest : DescribeSpec({
 
     val texasClientMock = mockk<TexasHttpClient>()
     val dineSykmeldteServiceMock = mockk<DineSykmeldteService>()
+    val esyfovarselProducerMock = mockk<EsyfovarselProducer>()
 
     describe("Oppfolgingsplan API") {
         it("GET /oppfolgingsplaner should respond with Unauthorized when no authentication is provided") {
@@ -24,7 +29,7 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 // Arrange
                 application {
                     routing {
-                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock)
+                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock, esyfovarselProducerMock)
                     }
                 }
                 // Act
@@ -38,7 +43,7 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 // Arrange
                 application {
                     routing {
-                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock)
+                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock, esyfovarselProducerMock)
                     }
                 }
                 // Act
@@ -55,13 +60,16 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 // Arrange
                 application {
                     routing {
-                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock)
+                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock, esyfovarselProducerMock)
                     }
                 }
                 coEvery {
                     texasClientMock.introspectToken(any(), any())
                 } returns TexasIntrospectionResponse(active = true, pid = "userIdentifier", acr = "Level4")
 
+                coEvery {
+                    esyfovarselProducerMock.sendVarselToEsyfovarsel(any())
+                } returns Unit
                 // Act
                 val response = client.get {
                     url("/api/v1/narmesteleder/123/oppfolgingsplaner")
@@ -69,6 +77,7 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 }
                 // Assert
                 response.status shouldBe HttpStatusCode.OK
+                verify(exactly = 1) { esyfovarselProducerMock.sendVarselToEsyfovarsel(any()) }
             }
         }
         it("GET /oppfolgingsplaner should respond with Forbidden when texas acr claim is not Level4") {
@@ -76,7 +85,7 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 // Arrange
                 application {
                     routing {
-                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock)
+                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock, esyfovarselProducerMock)
                     }
                 }
                 coEvery {
@@ -97,7 +106,7 @@ class OppfolgingsplanApiTest : DescribeSpec({
                 // Arrange
                 application {
                     routing {
-                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock)
+                        registerOppfolgingsplanApi(dineSykmeldteServiceMock, texasClientMock, esyfovarselProducerMock)
                     }
                 }
                 coEvery {
