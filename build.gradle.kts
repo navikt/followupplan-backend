@@ -45,7 +45,8 @@ dependencies {
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
     implementation("io.ktor:ktor-server-netty")
     implementation("ch.qos.logback:logback-classic:$logback_version")
-    implementation("io.ktor:ktor-server-config-yaml")
+    implementation("io.ktor:ktor-server-swagger")
+    implementation("io.ktor:ktor-server-openapi")
     testImplementation("io.ktor:ktor-server-test-host")
 
     // Metrics and Prometheus
