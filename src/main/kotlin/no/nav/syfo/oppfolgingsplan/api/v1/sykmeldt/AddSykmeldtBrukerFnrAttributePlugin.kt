@@ -6,17 +6,18 @@ import io.ktor.server.auth.principal
 import io.ktor.server.response.respond
 import io.ktor.util.AttributeKey
 import no.nav.syfo.application.auth.BrukerPrincipal
+import no.nav.syfo.oppfolgingsplan.domain.Fodselsnummer
 import no.nav.syfo.texas.client.TexasHttpClient
 
-class ValidateBrukerPrincipalConfiguration(
+class AddSykmeldtBrukerFnrAttributePluginConfiguration(
     var texasHttpClient: TexasHttpClient? = null,
 )
 
-val CALL_ATTRIBUTE_BRUKER_PRINCIPAL = AttributeKey<BrukerPrincipal>("brukerPrincipal")
+val CALL_ATTRIBUTE_SYKMELDT_BRUKER_FODSELSNUMMER = AttributeKey<Fodselsnummer>("sykmeldtBrukerFodselsnummer")
 
-val ValidateBrukerPrincipalPlugin = createRouteScopedPlugin(
-    name = "ValidateSykmeldtPlugin",
-    createConfiguration = ::ValidateBrukerPrincipalConfiguration,
+val AddSykmeldtBrukerFnrAttributePlugin = createRouteScopedPlugin(
+    name = "AddSykmeldtBrukerFnrAttributePlugin",
+    createConfiguration = ::AddSykmeldtBrukerFnrAttributePluginConfiguration,
 ) {
     pluginConfig.apply {
         onCall { call ->
@@ -27,7 +28,7 @@ val ValidateBrukerPrincipalPlugin = createRouteScopedPlugin(
                     return@onCall
                 }
 
-            call.attributes[CALL_ATTRIBUTE_BRUKER_PRINCIPAL] = innloggetBruker
+            call.attributes[CALL_ATTRIBUTE_SYKMELDT_BRUKER_FODSELSNUMMER] = Fodselsnummer(innloggetBruker.ident)
         }
     }
 }

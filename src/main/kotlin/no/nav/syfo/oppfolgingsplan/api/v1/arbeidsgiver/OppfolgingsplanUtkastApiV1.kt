@@ -19,7 +19,7 @@ fun Route.registerArbeidsgiverOppfolgingsplanUtkastApiV1(
 ) {
 
     route("/arbeidsgiver/{narmesteLederId}/oppfolgingsplaner/utkast") {
-        install(ValidateAccessToSykmeldtPlugin) {
+        install(AuthorizeLeaderAccessToSykmeldtPlugin) {
             this.texasHttpClient = texasHttpClient
             this.dineSykmeldteService = dineSykmeldteService
         }
