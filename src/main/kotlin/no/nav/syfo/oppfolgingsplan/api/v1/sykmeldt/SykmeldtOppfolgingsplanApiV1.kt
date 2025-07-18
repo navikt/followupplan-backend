@@ -10,6 +10,7 @@ import io.ktor.server.routing.route
 import java.util.*
 import no.nav.syfo.oppfolgingsplan.api.v1.extractAndValidateUUIDParameter
 import no.nav.syfo.oppfolgingsplan.db.PersistedOppfolgingsplan
+import no.nav.syfo.oppfolgingsplan.domain.Fodselsnummer
 import no.nav.syfo.oppfolgingsplan.service.OppfolgingsplanService
 import no.nav.syfo.pdfgen.PdfGenService
 import no.nav.syfo.texas.client.TexasHttpClient
@@ -31,16 +32,16 @@ fun Route.registerSykmeldtOppfolgingsplanApiV1(
 
     fun checkIfOppfolgingsplanBelongsToSykmeldt(
         oppfolgingsplan: PersistedOppfolgingsplan,
-        sykmeldtFnr: String,
+        sykmeldtFnr: Fodselsnummer,
     ) {
-        if (oppfolgingsplan.sykmeldtFnr != sykmeldtFnr) {
+        if (oppfolgingsplan.sykmeldtFnr != sykmeldtFnr.value) {
             log.error("Oppfolgingsplan with uuid: ${oppfolgingsplan.uuid} does not belong to logged in user")
             throw NotFoundException("Oppfolgingsplan not found")
         }
     }
 
     route("/sykmeldt/oppfolgingsplaner") {
-        install(ValidateBrukerPrincipalPlugin) {
+        install(AddSykmeldtBrukerFnrAttributePlugin) {
             this.texasHttpClient = texasHttpClient
         }
 
@@ -49,8 +50,8 @@ fun Route.registerSykmeldtOppfolgingsplanApiV1(
          * Tiltenkt for oversiktsvisning.
          */
         get("/oversikt") {
-            val principal = call.attributes[CALL_ATTRIBUTE_BRUKER_PRINCIPAL]
-            val oppfolgingsplaner = oppfolgingsplanService.getOppfolginsplanOverviewFor(principal.ident)
+            val brukerFnr = call.attributes[CALL_ATTRIBUTE_SYKMELDT_BRUKER_FODSELSNUMMER]
+            val oppfolgingsplaner = oppfolgingsplanService.getOppfolginsplanOverviewFor(brukerFnr.value)
 
             call.respond(HttpStatusCode.OK, oppfolgingsplaner)
         }
@@ -63,8 +64,8 @@ fun Route.registerSykmeldtOppfolgingsplanApiV1(
 
             val oppfolgingsplan = tryToGetOppfolgingsplanByUuid(uuid)
 
-            val sykmeldtFnr = call.attributes[CALL_ATTRIBUTE_BRUKER_PRINCIPAL].ident
-            checkIfOppfolgingsplanBelongsToSykmeldt(oppfolgingsplan, sykmeldtFnr)
+            val brukerFnr = call.attributes[CALL_ATTRIBUTE_SYKMELDT_BRUKER_FODSELSNUMMER]
+            checkIfOppfolgingsplanBelongsToSykmeldt(oppfolgingsplan, brukerFnr)
 
             call.respond(HttpStatusCode.OK, oppfolgingsplan)
         }
@@ -74,8 +75,8 @@ fun Route.registerSykmeldtOppfolgingsplanApiV1(
 
             val oppfolgingsplan = tryToGetOppfolgingsplanByUuid(uuid)
 
-            val sykmeldtFnr = call.attributes[CALL_ATTRIBUTE_BRUKER_PRINCIPAL].ident
-            checkIfOppfolgingsplanBelongsToSykmeldt(oppfolgingsplan, sykmeldtFnr)
+            val brukerFnr = call.attributes[CALL_ATTRIBUTE_SYKMELDT_BRUKER_FODSELSNUMMER]
+            checkIfOppfolgingsplanBelongsToSykmeldt(oppfolgingsplan, brukerFnr)
 
             pdfGenService.generatePdf(oppfolgingsplan)?.let {
                 call.response.status(HttpStatusCode.OK)
